@@ -7,7 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop omni-prompting-app",
+    "pm2:restart": "pm2 restart omni-prompting-app",
+    "pm2:delete": "pm2 delete omni-prompting-app",
+    "pm2:logs": "pm2 logs omni-prompting-app",
+    "pm2:monit": "pm2 monit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",
