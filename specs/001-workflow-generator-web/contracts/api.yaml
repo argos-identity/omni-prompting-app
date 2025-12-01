@@ -1,0 +1,307 @@
+openapi: 3.0.3
+info:
+  title: Workflow Generator API
+  description: API for generating AI verification workflows from policy documents
+  version: 1.0.0
+  contact:
+    name: Workflow Generator
+servers:
+  - url: /api
+    description: Next.js API Routes
+
+paths:
+  /prompts:
+    get:
+      operationId: getPrompt
+      summary: Get prompt content
+      description: Retrieves the content of a system or meta prompt file
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [system, meta]
+          description: Type of prompt to retrieve
+      responses:
+        '200':
+          description: Prompt content retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromptContent'
+        '400':
+          description: Invalid prompt type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Prompt file not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      operationId: updatePrompt
+      summary: Update prompt content
+      description: Saves updated content to a system or meta prompt file
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePromptRequest'
+      responses:
+        '200':
+          description: Prompt updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromptContent'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Failed to save prompt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /generate:
+    post:
+      operationId: generateWorkflow
+      summary: Generate workflow from policy document
+      description: |
+        Uploads a policy document and generates a workflow.md using the
+        configured system and meta prompts via Claude Opus 4.5
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GenerateWorkflowRequest'
+      responses:
+        '200':
+          description: Workflow generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateWorkflowResponse'
+        '400':
+          description: Invalid file type or size
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateWorkflowErrorResponse'
+        '422':
+          description: Could not parse document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateWorkflowErrorResponse'
+        '429':
+          description: Rate limited by LLM API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateWorkflowErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateWorkflowErrorResponse'
+        '504':
+          description: LLM request timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateWorkflowErrorResponse'
+
+components:
+  schemas:
+    PromptType:
+      type: string
+      enum: [system, meta]
+      description: Type of prompt
+
+    PromptContent:
+      type: object
+      required:
+        - type
+        - content
+        - lastModified
+        - filePath
+      properties:
+        type:
+          $ref: '#/components/schemas/PromptType'
+        content:
+          type: string
+          description: Raw markdown content of the prompt
+          minLength: 1
+          maxLength: 100000
+        lastModified:
+          type: string
+          format: date-time
+          description: Last modified timestamp
+        filePath:
+          type: string
+          description: File path relative to project root
+
+    UpdatePromptRequest:
+      type: object
+      required:
+        - type
+        - content
+      properties:
+        type:
+          $ref: '#/components/schemas/PromptType'
+        content:
+          type: string
+          description: New prompt content
+          minLength: 1
+          maxLength: 100000
+
+    GenerateWorkflowRequest:
+      type: object
+      required:
+        - policyDocument
+      properties:
+        policyDocument:
+          type: string
+          format: binary
+          description: Policy document file (.txt, .md, .pdf, or .docx)
+        systemPrompt:
+          type: string
+          description: Optional override for system prompt (uses saved if omitted)
+        metaPrompt:
+          type: string
+          description: Optional override for meta prompt (uses saved if omitted)
+
+    TokenUsage:
+      type: object
+      required:
+        - inputTokens
+        - outputTokens
+        - totalTokens
+      properties:
+        inputTokens:
+          type: integer
+          minimum: 0
+          description: Input tokens sent to LLM
+        outputTokens:
+          type: integer
+          minimum: 0
+          description: Output tokens received from LLM
+        totalTokens:
+          type: integer
+          minimum: 0
+          description: Total tokens used
+
+    GeneratedWorkflow:
+      type: object
+      required:
+        - content
+        - generatedAt
+        - sourceDocument
+        - tokenUsage
+      properties:
+        content:
+          type: string
+          description: Generated workflow.md content
+        generatedAt:
+          type: string
+          format: date-time
+          description: Generation timestamp
+        sourceDocument:
+          type: string
+          description: Original filename of source document
+        tokenUsage:
+          $ref: '#/components/schemas/TokenUsage'
+
+    GenerateWorkflowResponse:
+      type: object
+      required:
+        - success
+        - workflow
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        workflow:
+          $ref: '#/components/schemas/GeneratedWorkflow'
+
+    ErrorCode:
+      type: string
+      enum:
+        - INVALID_FILE_TYPE
+        - FILE_TOO_LARGE
+        - PARSE_ERROR
+        - LLM_ERROR
+        - RATE_LIMITED
+        - TIMEOUT
+        - INTERNAL_ERROR
+      description: Error code for programmatic handling
+
+    GenerationError:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        message:
+          type: string
+          description: Human-readable error message
+
+    GenerateWorkflowErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          $ref: '#/components/schemas/GenerationError'
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type
+        message:
+          type: string
+          description: Human-readable error message
+
+  # File constraints documentation
+  x-file-constraints:
+    maxFileSize: 10485760  # 10MB in bytes
+    allowedExtensions:
+      - .txt
+      - .md
+      - .pdf
+      - .docx
+    allowedMimeTypes:
+      - text/plain
+      - text/markdown
+      - application/pdf
+      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
