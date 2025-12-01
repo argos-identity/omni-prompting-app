@@ -8,8 +8,8 @@ import type { TokenUsage } from '@/types/workflow';
 import { URL_CONSTRAINTS } from '@/types/api';
 import { logTokenUsage } from './token-logger';
 
-/** Claude model identifier */
-const MODEL_ID = 'claude-sonnet-4-20250514';
+/** Claude model identifier - using Opus 4.5 for consistency */
+const MODEL_ID = 'claude-opus-4-5-20251101';
 
 /** URL fetch result */
 export interface UrlFetchResult {
