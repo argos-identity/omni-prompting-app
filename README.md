@@ -139,7 +139,7 @@ ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
 ```bash
 npm run dev
 ```
-→ http://localhost:3000 에서 접속
+→ http://localhost:3500 에서 접속
 
 ### 프로덕션 빌드
 ```bash

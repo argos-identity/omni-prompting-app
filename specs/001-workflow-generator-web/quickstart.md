@@ -46,7 +46,7 @@ pnpm dev
 npm run dev
 ```
 
-Application runs at `http://localhost:3000`
+Application runs at `http://localhost:3500`
 
 ## Usage
 
