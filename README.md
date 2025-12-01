@@ -24,7 +24,7 @@
 | **Runtime** | React 19, TypeScript 5 (Strict Mode) |
 | **Styling** | TailwindCSS 3.4 |
 | **UI Components** | Radix UI, Lucide Icons |
-| **LLM** | Claude Sonnet 4 (`claude-sonnet-4-20250514`) |
+| **LLM** | Claude Sonnet 4 (`Claude Opus 4.5`) |
 | **LLM SDK** | @anthropic-ai/sdk v0.32.0 |
 | **Document Parsing** | pdf-parse (PDF), mammoth (DOCX) |
 | **Validation** | Zod |
