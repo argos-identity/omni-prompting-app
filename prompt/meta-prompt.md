@@ -21,7 +21,7 @@ This `workflow.md` will serve as the "Brain" for an **MCP-enabled AI Agent**. It
 * **verify_address(full_address)**: Validates address existence via Maps API.
 * **check_authority(id_number, name)**: Cross-references IDs with Govt/Internal DB.
 * **analyze_text(content)**: General purpose analysis for logical consistency.
-
+<!--
 ## Extended MCP Tools
 * **sequential_thinking(problem, depth)**: Complex multi-step reasoning and hypothesis testing (Sequential MCP)
 * **search_documentation(library, topic)**: Framework/library documentation search (Context7 MCP)
@@ -29,7 +29,7 @@ This `workflow.md` will serve as the "Brain" for an **MCP-enabled AI Agent**. It
 * **web_search(query, filters)**: Web search and information retrieval (Tavily MCP)
 * **browser_automation(scenario)**: E2E testing and visual validation (Playwright MCP)
 * **pattern_edit(files, pattern, replacement)**: Bulk code transformations (Morphllm MCP)
-
+-->
 ---
 
 # Execution Instructions (Step-by-Step Logic)
@@ -208,7 +208,7 @@ Language Convention:
     - Multiple Major Flags (≥3) → MANUAL_REVIEW minimum
     - Conflicting Data Sources → MANUAL_REVIEW for reconciliation
     </escalation_rules>
-    
+
  -->    
     
 </decision_engine>
