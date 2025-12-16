@@ -8,8 +8,8 @@ import type { PromptType, PromptContent } from '@/types/prompts';
 
 /** Prompt file paths relative to project root */
 const PROMPT_PATHS: Record<PromptType, string> = {
-  system: 'prompt/system-prompt.md',
-  meta: 'prompt/meta-prompt.md',
+  system: 'prompt/policy-prompt/system-prompt.md',
+  meta: 'prompt/policy-prompt/meta-prompt.md',
 };
 
 /**

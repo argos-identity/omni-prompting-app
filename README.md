@@ -99,8 +99,8 @@
 ### `/prompt` - 프롬프트 및 전처리기
 | 파일 | 설명 |
 |------|------|
-| `system-prompt.md` | Omni Verification Agent 시스템 정의 |
-| `meta-prompt.md` | workflow.md 생성용 메타 프롬프트 (v3.0) |
+| `policy-prompt/system-prompt.md` | Omni Verification Agent 시스템 정의 |
+| `policy-prompt/meta-prompt.md` | workflow.md 생성용 메타 프롬프트 (v3.0) |
 | `preprocessor.js` | 결정론적 패턴 매칭 전처리기 |
 | `pattern-registry.json` | 패턴 매칭 규칙 정의 |
 
@@ -178,8 +178,9 @@ omni-prompting-test/
 │   ├── api/                # API 유틸리티
 │   └── utils/              # 공통 유틸리티
 ├── prompt/                 # 프롬프트 + 전처리기
-│   ├── system-prompt.md
-│   ├── meta-prompt.md
+│   ├── policy-prompt/
+│   │   ├── system-prompt.md
+│   │   └── meta-prompt.md
 │   ├── preprocessor.js     # 결정론적 전처리기
 │   └── pattern-registry.json
 ├── types/                  # TypeScript 타입 정의
