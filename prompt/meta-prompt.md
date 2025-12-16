@@ -183,7 +183,7 @@ Language Convention:
     - **REJECT_HARD**: Policy violation confirmed, final rejection
       - 정책 위반 확정, 최종 거부 (재신청 불가 또는 제한)
     </outcome_definitions>
-
+<!--
     <risk_scoring>
     [Calculate weighted risk score to determine outcome]
     - **Critical Flags (×3)**: Identity mismatch, sanctions list match, fraud indicators
@@ -191,7 +191,7 @@ Language Convention:
     - **Major Flags (×2)**: Address mismatch, abnormal patterns, missing critical docs
       - 주소 불일치, 이상 패턴, 필수 서류 누락
     - **Minor Flags (×1)**: Format errors, incomplete optional fields, minor inconsistencies
-      - 형식 오류, 선택 필드 누락, 경미한 불일치
+      - 형식 오류, 선택 필드 누락, 경미한 불일치 
 
     Risk Threshold Guidelines:
     - Score 0: PASS
@@ -208,6 +208,9 @@ Language Convention:
     - Multiple Major Flags (≥3) → MANUAL_REVIEW minimum
     - Conflicting Data Sources → MANUAL_REVIEW for reconciliation
     </escalation_rules>
+    
+ -->    
+    
 </decision_engine>
 ```
 
