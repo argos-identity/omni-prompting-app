@@ -94,7 +94,6 @@ Language Convention:
     "description": "데이터에 목적 태그를 부여하고 최소 수집·정확성·보안·보관 기간 준수 여부를 자동 점검한다.",
     "engine_required": false,
     "engine_type": null,
-    "mcp_tool": null,
     "reference_notes": [
       "목적과 원칙: 본 정책은 가맹점 심사와 온보딩에 필요한 정보를 적법하고 투명하게 수집·검증·보관·파기하기 위한 기준을 규정한다.",
       "Paynuity는 목적 제한, 최소 수집, 정확성 확보, 보안 강화, 보관 기간 준수의 원칙을 따른다."
@@ -108,7 +107,6 @@ Language Convention:
     "description": "법인명, DBA, TIN/SSN, 사업장 주소, 웹사이트, 공식 이메일 등 기본 비즈니스 정보를 정규화하고 형식을 검증한다.",
     "engine_required": false,
     "engine_type": null,
-    "mcp_tool": null,
     "reference_notes": [
       "1단계: 신청서 기반 수집 - 가맹점 신청이 접수되면 기본 비즈니스 정보를 수집한다.",
       "기본 비즈니스 정보에는 법인명, DBA, TIN 또는 SSN, 사업장 주소, 웹사이트, 공식 이메일 등이 포함된다."
@@ -122,7 +120,6 @@ Language Convention:
     "description": "제출된 사업자 문서에서 OCR을 사용하여 구조화된 데이터를 추출한다.",
     "engine_required": true,
     "engine_type": "OCR",
-    "mcp_tool": "magic",
     "reference_notes": [
       "문서 처리는 효율성을 위해 자동화된 추출이 필요하다.",
       "OCR 결과는 신청서 데이터와 대조 검증되어야 한다."
@@ -136,7 +133,6 @@ Language Convention:
     "description": "복수의 데이터 소스 간 정보 일치 여부를 교차 검증하고 불일치 항목을 식별한다.",
     "engine_required": true,
     "engine_type": "LLM",
-    "mcp_tool": "sequential_thinking",
     "reference_notes": [
       "교차 검증은 신청서, OCR 추출 데이터, 외부 DB 조회 결과를 비교한다.",
       "불일치 발견 시 자동으로 MANUAL_REVIEW 플래그를 설정한다."
@@ -150,7 +146,6 @@ Language Convention:
     "description": "OFAC, UN 제재 목록 등 글로벌 제재 리스트와 대조하여 매칭 여부를 확인한다.",
     "engine_required": true,
     "engine_type": "WEB_SEARCH",
-    "mcp_tool": "web_search",
     "reference_notes": [
       "제재 목록 스크리닝은 정보 조회 및 매칭이 가능하나, 최종 판정은 허용되지 않는다.",
       "매칭 결과는 반드시 컴플라이언스 담당자의 검토를 거쳐야 한다."
@@ -164,7 +159,6 @@ Language Convention:
     "description": "가맹점 신청에 대한 최종 법적 승인 또는 거부 결정을 내린다.",
     "engine_required": false,
     "engine_type": null,
-    "mcp_tool": null,
     "reference_notes": [
       "최종 승인 결정은 인간의 권한이 필요하다.",
       "가맹점 수락에 대한 법적 책임은 권한 있는 담당자에게 있다."
@@ -250,7 +244,9 @@ Language Convention for Action Objects:
 | `description` | string | Yes | Explanation of what the action performs (한국어 권장) |
 | `engine_required` | boolean | Yes | Whether an external engine (AI/ML, etc.) is required |
 | `engine_type` | string \| null | Yes | Type of engine required (null if engine_required is false) |
+<!--
 | `mcp_tool` | string \| null | Conditional | MCP server to use when engine_required is true (see mapping table) |
+-->
 | `reference_notes` | array[string] | Yes | List of related policies and reference documentation (한국어 권장) |
 
 ---
