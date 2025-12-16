@@ -1,74 +1,35 @@
 /**
  * Workflow-related type definitions
+ * JSON-based workflow generation
  */
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Preprocessor Output Types (Deterministic Extraction)
+// Workflow Action Types
 // ═══════════════════════════════════════════════════════════════════════════
 
-/** Matched pattern from preprocessor */
-export interface MatchedPattern {
-  pattern_id: string;
+/** 워크플로우 액션 항목 */
+export interface WorkflowAction {
+  /** 계층적 ID (예: "0.1", "1.1", "1.2") */
+  id: string;
+
+  /** snake_case 액션 이름 */
+  action_name: string;
+
+  /** 카테고리 */
   category: string;
-  priority: number;
-  criticality: string;
-  tool_id: string;
-  matched_keyword: string;
-  match_position: number;
-  source_type: string;
-  is_prerequisite: boolean;
-}
 
-/** Unmatched pattern info */
-export interface UnmatchedPattern {
-  pattern_id: string;
-  category: string;
-}
-
-/** Role selection result */
-export interface SelectedRole {
-  role: string;
-  matched_via: string;
-  priority: number;
-}
-
-/** Risk level selection result */
-export interface SelectedRiskLevel {
-  level: string;
-  matched_via: string;
-}
-
-/** Checklist item */
-export interface ChecklistItem {
-  data_point: string;
-  source: string;
-  tool: string;
-}
-
-/** Preprocessor metadata */
-export interface PreprocessorMetadata {
-  registry_version: string;
-  timestamp: string;
-  policy_hash: string;
-}
-
-/** Complete preprocessor output structure */
-export interface PreprocessorOutput {
-  metadata: PreprocessorMetadata;
-  matched_patterns: MatchedPattern[];
-  unmatched_patterns: UnmatchedPattern[];
-  selected_role: SelectedRole;
-  selected_risk_level: SelectedRiskLevel;
-  extracted_principles: string[];
+  /** 한국어 설명 */
   description: string;
-  checklist: ChecklistItem[];
-  logic_flow: string[];
-  critical_failures: string[];
-  review_triggers: string[];
-}
 
-/** Extraction method indicator */
-export type ExtractionMethod = 'preprocessor' | 'llm' | 'fallback';
+  /** 외부 엔진 필요 여부 */
+  engine_required: boolean;
+
+  /** 엔진 타입 (null 가능) */
+  engine_type: string | null;
+
+  /** 정책 문서에서 추출된 관련 내용 */
+  reference_notes: string[];
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LLM Types
@@ -88,8 +49,14 @@ export interface TokenUsage {
 
 /** Generated workflow result */
 export interface GeneratedWorkflow {
-  /** Generated workflow content in markdown format */
-  content: string;
+  /** Generated workflow actions as JSON array */
+  actions: WorkflowAction[];
+
+  /** Raw content (for backward compatibility or debugging) */
+  rawContent: string;
+
+  /** Extracted workflow.md markdown content */
+  workflowMd: string;
 
   /** Generation timestamp (ISO 8601) */
   generatedAt: string;
@@ -118,14 +85,8 @@ export interface ExtractedPolicyData {
   /** Source document filename */
   sourceDocument: string;
 
-  /** Token usage for the extraction (0 if preprocessor used) */
+  /** Token usage for the extraction */
   tokenUsage: TokenUsage;
-
-  /** Full preprocessor output (only present when extractionMethod is 'preprocessor') */
-  preprocessorOutput?: PreprocessorOutput;
-
-  /** How the data was extracted */
-  extractionMethod: ExtractionMethod;
 }
 
 /** Workflow generation state */

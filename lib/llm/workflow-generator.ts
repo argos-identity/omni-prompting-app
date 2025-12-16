@@ -1,18 +1,13 @@
 /**
  * Workflow generation logic using Claude API
- * 2차 LLM 호출: 추출된 정책 데이터로 workflow.md 생성
+ * 2차 LLM 호출: 추출된 정책 데이터로 JSON 배열 워크플로우 생성
  */
 
-import { readFile } from 'fs/promises';
-import path from 'path';
 import { generateContent, type GenerateResult } from './claude-client';
-import type { GeneratedWorkflow, ExtractedPolicyData } from '@/types/workflow';
+import type { GeneratedWorkflow, ExtractedPolicyData, WorkflowAction } from '@/types/workflow';
 
-/** Template placeholders in meta-prompt */
+/** Template placeholder in meta-prompt */
 const POLICY_PLACEHOLDER = '{{심사 기준 또는 정책 문서}}';
-const PATTERN_REG_PLACEHOLDER = '{{pattern_registry.json 내용}}';
-const PREPROCESSED_DATA_PLACEHOLDER = '[PREPROCESSED_DATA]:';
-
 
 export interface GenerateWorkflowOptions {
   systemPrompt: string;
@@ -22,57 +17,14 @@ export interface GenerateWorkflowOptions {
 }
 
 /**
- * Inject pattern registry JSON into meta-prompt (legacy support)
- * 새 meta-prompt v3.0에서는 사용하지 않음 (preprocessor가 처리)
- */
-async function injectPatternRegistry(metaPrompt: string): Promise<string> {
-  // 새 meta-prompt에는 pattern_registry 플레이스홀더가 없음
-  // 플레이스홀더가 있는 경우에만 주입 시도
-  if (!metaPrompt.includes(PATTERN_REG_PLACEHOLDER)) {
-    console.log('[WorkflowGenerator] Pattern Registry 플레이스홀더 없음 (v3.0 meta-prompt) - 스킵');
-    return metaPrompt;
-  }
-
-  const registryPath = path.join(process.cwd(), 'prompt', 'pattern-registry-kr.json');
-  const registryContent = await readFile(registryPath, 'utf-8');
-
-  console.log('\n' + '='.repeat(80));
-  console.log('[WorkflowGenerator] Pattern Registry 주입 (legacy)');
-  console.log('='.repeat(80));
-  console.log('파일 경로:', registryPath);
-  console.log('파일 크기:', registryContent.length, 'chars');
-  console.log('→ 치환 완료');
-  console.log('='.repeat(80) + '\n');
-
-  return metaPrompt.replace(PATTERN_REG_PLACEHOLDER, registryContent);
-}
-
-/**
- * Replace template placeholder in meta-prompt with extracted policy data
- * v3.0: preprocessor 출력을 JSON으로 주입
- * legacy: 정책 데이터를 텍스트로 주입
+ * Inject extracted policy data into meta-prompt template
  */
 function injectPolicyData(metaPrompt: string, extractedData: ExtractedPolicyData): string {
   console.log('\n' + '='.repeat(80));
   console.log('[WorkflowGenerator] Meta-Prompt 템플릿 치환 시작');
   console.log('='.repeat(80));
-  console.log('추출 방식:', extractedData.extractionMethod);
 
-  // v3.0 meta-prompt: preprocessor JSON 주입
-  if (metaPrompt.includes(PREPROCESSED_DATA_PLACEHOLDER) && extractedData.preprocessorOutput) {
-    const preprocessorJson = JSON.stringify(extractedData.preprocessorOutput, null, 2);
-
-    console.log('[v3.0] Preprocessor JSON 주입');
-    console.log('JSON 크기:', preprocessorJson.length, 'chars');
-    console.log('='.repeat(80) + '\n');
-
-    return metaPrompt.replace(
-      PREPROCESSED_DATA_PLACEHOLDER,
-      `${PREPROCESSED_DATA_PLACEHOLDER}\n${preprocessorJson}`
-    );
-  }
-
-  // Legacy meta-prompt: 정책 텍스트 주입
+  // Format extracted data for injection
   const formattedData = `
 ## 정책 요약
 ${extractedData.summary}
@@ -84,7 +36,6 @@ ${extractedData.validationRules.map((rule, i) => `${i + 1}. ${rule}`).join('\n')
 ${extractedData.content}
 `.trim();
 
-  console.log('[Legacy] 정책 텍스트 주입');
   console.log('요약:', extractedData.summary);
   console.log('검증 규칙 수:', extractedData.validationRules.length);
 
@@ -105,6 +56,93 @@ ${extractedData.content}
 }
 
 /**
+ * Extract workflow.md markdown content from LLM response
+ * Looks for ```markdown code block
+ */
+function extractWorkflowMd(content: string): string {
+  // Match ```markdown ... ``` code block
+  const markdownBlockRegex = /```markdown\s*([\s\S]*?)```/;
+  const match = content.match(markdownBlockRegex);
+
+  if (match && match[1]) {
+    console.log('[WorkflowGenerator] workflow.md 마크다운 블록 추출 성공');
+    return match[1].trim();
+  }
+
+  // Fallback: try to find content starting with YAML frontmatter
+  const yamlFrontmatterRegex = /^---\s*\n[\s\S]*?\n---/m;
+  if (yamlFrontmatterRegex.test(content)) {
+    console.log('[WorkflowGenerator] YAML frontmatter 형식 감지, 전체 콘텐츠 반환');
+    return content.trim();
+  }
+
+  console.log('[WorkflowGenerator] workflow.md 마크다운 블록 미발견');
+  return '';
+}
+
+/**
+ * Parse JSON array from LLM response
+ * Handles markdown code blocks and validates structure
+ */
+function parseWorkflowActions(content: string): WorkflowAction[] {
+  let jsonContent = content.trim();
+
+  // Remove markdown code blocks if present
+  if (jsonContent.startsWith('```json')) {
+    jsonContent = jsonContent.slice(7);
+  } else if (jsonContent.startsWith('```')) {
+    jsonContent = jsonContent.slice(3);
+  }
+  if (jsonContent.endsWith('```')) {
+    jsonContent = jsonContent.slice(0, -3);
+  }
+
+  jsonContent = jsonContent.trim();
+
+  // Parse JSON
+  const parsed = JSON.parse(jsonContent);
+
+  // Validate it's an array
+  if (!Array.isArray(parsed)) {
+    throw new Error('Expected JSON array but got ' + typeof parsed);
+  }
+
+  // Validate each action has required fields
+  const actions: WorkflowAction[] = parsed.map((item, index) => {
+    if (typeof item.id !== 'string') {
+      throw new Error(`Action at index ${index} missing 'id' field`);
+    }
+    if (typeof item.action_name !== 'string') {
+      throw new Error(`Action at index ${index} missing 'action_name' field`);
+    }
+    if (typeof item.category !== 'string') {
+      throw new Error(`Action at index ${index} missing 'category' field`);
+    }
+    if (typeof item.description !== 'string') {
+      throw new Error(`Action at index ${index} missing 'description' field`);
+    }
+    if (typeof item.engine_required !== 'boolean') {
+      throw new Error(`Action at index ${index} missing 'engine_required' field`);
+    }
+    if (!Array.isArray(item.reference_notes)) {
+      throw new Error(`Action at index ${index} missing 'reference_notes' array`);
+    }
+
+    return {
+      id: item.id,
+      action_name: item.action_name,
+      category: item.category,
+      description: item.description,
+      engine_required: item.engine_required,
+      engine_type: item.engine_type ?? null,
+      reference_notes: item.reference_notes,
+    };
+  });
+
+  return actions;
+}
+
+/**
  * Generate workflow from extracted policy data
  */
 export async function generateWorkflow(
@@ -112,13 +150,10 @@ export async function generateWorkflow(
 ): Promise<GeneratedWorkflow> {
   const { systemPrompt, metaPrompt, extractedData, sourceDocumentName } = options;
 
-  // 1. Inject pattern registry into meta-prompt template
-  const withPatternRegistry = await injectPatternRegistry(metaPrompt);
+  // Inject extracted policy data into meta-prompt template
+  const populatedMetaPrompt = injectPolicyData(metaPrompt, extractedData);
 
-  // 2. Inject extracted policy data into meta-prompt template
-  const populatedMetaPrompt = injectPolicyData(withPatternRegistry, extractedData);
-
-  // 3. Generate content using Claude
+  // Generate content using Claude
   const result: GenerateResult = await generateContent({
     systemPrompt,
     userContent: populatedMetaPrompt,
@@ -126,8 +161,23 @@ export async function generateWorkflow(
     sourceDocument: sourceDocumentName,
   });
 
+  // Extract workflow.md markdown content
+  const workflowMd = extractWorkflowMd(result.content);
+
+  // Parse JSON actions from response (for backward compatibility)
+  let actions: WorkflowAction[] = [];
+  try {
+    actions = parseWorkflowActions(result.content);
+    console.log(`[WorkflowGenerator] JSON 파싱 성공: ${actions.length}개 액션`);
+  } catch (parseError) {
+    console.error('[WorkflowGenerator] JSON 파싱 실패:', parseError);
+    // Return empty actions array on parse failure, raw content preserved
+  }
+
   return {
-    content: result.content,
+    actions,
+    rawContent: result.content,
+    workflowMd,
     generatedAt: new Date().toISOString(),
     sourceDocument: sourceDocumentName,
     tokenUsage: result.tokenUsage,
