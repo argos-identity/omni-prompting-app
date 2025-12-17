@@ -78,91 +78,186 @@ The process must follow a strict sequence:
 
 
 <action_workflow>
-## EXAMPLE
-<!--
-Language Convention:
-- Field names/keys: English (snake_case)
-- description, reference_notes: Korean (한국어)
-- action_flag: "true" = AI can execute, "false" = requires human
+<!-- 
+Language Convention: 
+- Field names/keys: English (snake_case) 
+- description, reference_notes: Written in the primary language recorded in the policy document. 
+- action_flag: "true" = AI can execute, "false" = requires human 
 -->
+
+<!--
+  =====================================================================
+  Omni Agent Workflow – Action Schema Definition
+  Purpose:
+  - Define how actions are ordered, interpreted, and executed by the AI Agent
+  - Enforce strict boundaries between autonomous agent actions and human-only decisions
+  =====================================================================
+-->
+
+<WorkflowActionSchema>
+  <!--
+    work_id
+    - Integer execution order
+    - Defines the ONLY valid action sequence
+    - Must be unique within a workflow
+    - Execution order is ascending (1 → N)
+    - Do NOT encode order in action_name
+  -->
+  <Field name="work_id" type="integer" required="true" />
+
+  <!--
+    action_name
+    - Stable, machine-readable identifier
+    - snake_case only
+    - Must remain stable across workflow versions
+    - Used for orchestration, logging, and policy enforcement
+  -->
+  <Field name="action_name" type="string" required="true" />
+
+  <!--
+    category
+    - Logical grouping label
+    - Used for observability, audit logs, and UI grouping
+    - Does NOT affect execution order
+  -->
+  <Field name="category" type="string" required="true" />
+
+  <!--
+    description
+    - Operational description of the action
+    - Describes WHAT is done, not WHO decides
+    - Must avoid language implying final approval or legal judgment
+  -->
+  <Field name="description" type="string" required="true" />
+
+  <!--
+    agent_executable
+    - Physical executability by the AI Agent (a digital analyst), not permission/authority.
+    - true  : Can be completed purely through digital operations (compute, transform, analyze, query, produce outputs).
+    - false : Requires real-world/physical execution or direct human action outside the agent’s digital tools.
+             Examples: mailing physical documents, making phone calls, in-person verification, handing over a card/device,
+             posting notices in a physical location, wet-ink signatures, collecting cash, visiting a site.
+    - If false: the agent must output an execution request (handoff) specifying what a human/system must do.
+  -->
+  <Field name="agent_executable" type="boolean" required="true" />
+
+  <!--
+    reference_notes
+    - Policy-derived notes that MUST be consulted when executing the action
+    - Source of truth: policy document (do not invent or modify semantics)
+    - Intended use:
+      (a) Grounding: ensure the agent follows policy intent and constraints
+			(b) Boundary Anchoring:
+	      Explicitly state policy-defined limits on interpretation and judgment,
+	      preventing the agent from extending execution beyond permitted scope
+      (c) Evidence: provide auditable rationale for why the action exists
+    - Constraints:
+      - Notes are guidance, not new requirements beyond the policy document
+      - The agent must not treat notes as user-provided facts; they are internal policy references
+      - The agent should not output the full policy text verbatim unless explicitly required by system design
+    - Format:
+      - An ordered list of note items (string)
+      - Each item should be a concise statement directly traceable to policy language
+  -->
+  <Field name="reference_notes" type="string[]" required="false" />
+
+  <!--
+    engines
+    - List of engines available for this action
+    - Empty array means no engine usage
+    - Each engine declares whether it is required
+  -->
+  <Field name="engines" type="Engine[]" required="true" />
+
+  <!--
+    Engine object
+    - type: engine identifier (controlled vocabulary)
+    - required:
+        true  → engine must succeed
+        false → optional / conditional / fallback
+  -->
+  <Engine>
+    <Field name="type" type="string" required="true" />
+    <Field name="required" type="boolean" required="true" />
+  </Engine>
+
+</WorkflowActionSchema>
+
+##Example
+<!-- Agent executability should be independent of order. IDs are sorted according to task sequence. -->
+<!-- ============================================================= -->
+<!-- 1. Agent-Executable Action (JSON payload)                     -->
+<!-- ============================================================= -->
 [
+	{
+	  "work_id": 1,
+	  "action_name": "parse_basic_business_information",
+	  "category": "Application Intake",
+	  "description": "Normalize and validate basic business information provided in the application.",
+	  "reference_notes": [
+	    "This step is limited to data normalization and format validation.",
+	    "No assessment of business legitimacy or risk level is permitted."
+	  ],
+	  "agent_executable": true,
+	  "engines": [
+	    {
+	      "type": "LLM",
+	      "required": true
+	    }
+	  ]
+	}
+  },
+	{
+	  "work_id": 2,
+	  "action_name": "cross_validate_business_data",
+	  "category": "Document Verification",
+	  "description": "Cross-validate business data across multiple sources and identify inconsistencies.",
+	  "reference_notes": [
+	    "Cross-validation does not establish factual correctness.",
+	    "Inconsistencies must not be interpreted as approval or rejection signals."
+	  ],
+	  "agent_executable": true,
+	  "engines": [
+	    {
+	      "type": "OCR",
+	      "required": false
+	    },
+	    {
+	      "type": "LLM",
+	      "required": true
+	    },
+	    {
+	      "type": "WEB_SEARCH",
+	      "required": false
+	    }
+	  ]
+	},
+<!-- ============================================================= -->
+<!-- 2. Non-Executable (Human-Only) Action (JSON payload)          -->
+<!-- ============================================================= -->
   {
-    "id": "1.0",
-    "action_name": "validate_data_purpose_and_compliance",
-    "action_flag": "true",
-    "category": "Foundational Checks",
-    "description": "데이터에 목적 태그를 부여하고 최소 수집·정확성·보안·보관 기간 준수 여부를 자동 점검한다.",
-    "engine_required": false,
-    "engine_type": null,
+    "work_id": 3,
+    "action_name": "notify_merchant_of_decision",
+    "category": "Post-Decision Handling",
+    "description": "Notify the merchant of the final decision through official communication channels.",
     "reference_notes": [
-      "목적과 원칙: 본 정책은 가맹점 심사와 온보딩에 필요한 정보를 적법하고 투명하게 수집·검증·보관·파기하기 위한 기준을 규정한다.",
-      "Paynuity는 목적 제한, 최소 수집, 정확성 확보, 보안 강화, 보관 기간 준수의 원칙을 따른다."
-    ]
+      "Official merchant notifications require human-mediated communication.",
+      "The agent may determine notification content but cannot deliver it directly."
+    ],
+    "agent_executable": false,
+    "engines": []
   },
   {
-    "id": "1.1",
-    "action_name": "parse_basic_business_information",
-    "action_flag": "true",
-    "category": "Application Intake",
-    "description": "법인명, DBA, TIN/SSN, 사업장 주소, 웹사이트, 공식 이메일 등 기본 비즈니스 정보를 정규화하고 형식을 검증한다.",
-    "engine_required": false,
-    "engine_type": null,
+    "work_id": 4,
+    "action_name": "send_physical_mail_notice",
+    "category": "Offline Fulfillment",
+    "description": "Send a physical mail notice containing the merchant onboarding outcome.",
     "reference_notes": [
-      "1단계: 신청서 기반 수집 - 가맹점 신청이 접수되면 기본 비즈니스 정보를 수집한다.",
-      "기본 비즈니스 정보에는 법인명, DBA, TIN 또는 SSN, 사업장 주소, 웹사이트, 공식 이메일 등이 포함된다."
-    ]
-  },
-  {
-    "id": "2.0",
-    "action_name": "extract_document_data_ocr",
-    "action_flag": "true",
-    "category": "Document Verification",
-    "description": "제출된 사업자 문서에서 OCR을 사용하여 구조화된 데이터를 추출한다.",
-    "engine_required": true,
-    "engine_type": "OCR",
-    "reference_notes": [
-      "문서 처리는 효율성을 위해 자동화된 추출이 필요하다.",
-      "OCR 결과는 신청서 데이터와 대조 검증되어야 한다."
-    ]
-  },
-  {
-    "id": "2.1",
-    "action_name": "cross_validate_business_data",
-    "action_flag": "true",
-    "category": "Document Verification",
-    "description": "복수의 데이터 소스 간 정보 일치 여부를 교차 검증하고 불일치 항목을 식별한다.",
-    "engine_required": true,
-    "engine_type": "LLM",
-    "reference_notes": [
-      "교차 검증은 신청서, OCR 추출 데이터, 외부 DB 조회 결과를 비교한다.",
-      "불일치 발견 시 자동으로 MANUAL_REVIEW 플래그를 설정한다."
-    ]
-  },
-  {
-    "id": "3.0",
-    "action_name": "sanctions_list_screening",
-    "action_flag": "true",
-    "category": "Compliance Check",
-    "description": "OFAC, UN 제재 목록 등 글로벌 제재 리스트와 대조하여 매칭 여부를 확인한다.",
-    "engine_required": true,
-    "engine_type": "WEB_SEARCH",
-    "reference_notes": [
-      "제재 목록 스크리닝은 정보 조회 및 매칭이 가능하나, 최종 판정은 허용되지 않는다.",
-      "매칭 결과는 반드시 컴플라이언스 담당자의 검토를 거쳐야 한다."
-    ]
-  },
-  {
-    "id": "4.0",
-    "action_name": "final_merchant_approval_decision",
-    "action_flag": "false",
-    "category": "Final Review",
-    "description": "가맹점 신청에 대한 최종 법적 승인 또는 거부 결정을 내린다.",
-    "engine_required": false,
-    "engine_type": null,
-    "reference_notes": [
-      "최종 승인 결정은 인간의 권한이 필요하다.",
-      "가맹점 수락에 대한 법적 책임은 권한 있는 담당자에게 있다."
-    ]
+      "Physical mail delivery requires offline handling and logistics.",
+      "The agent may generate content but cannot perform physical dispatch."
+    ],
+    "agent_executable": false,
+    "engines": []
   }
 ]
 </action_workflow>
