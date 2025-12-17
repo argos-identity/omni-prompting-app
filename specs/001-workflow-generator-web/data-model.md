@@ -2,6 +2,7 @@
 
 **Feature**: 001-workflow-generator-web
 **Date**: 2025-11-27
+**Updated**: 2025-12-17
 **Status**: Complete
 
 ## Entity Definitions
@@ -26,7 +27,7 @@ interface PromptContent {
 }
 ```
 
-**Storage**: File system at `./prompt/system-prompt.md` and `./prompt/meta-prompt.md`
+**Storage**: File system at `./prompt/policy-prompt/system-prompt.md` and `./prompt/policy-prompt/meta-prompt.md`
 
 **Validation Rules**:
 - `type` must be exactly 'system' or 'meta'
@@ -71,19 +72,114 @@ type SupportedMimeType =
 
 ---
 
-### 3. GeneratedWorkflow
+### 3. InputSource
+
+Represents the source type for policy input.
+
+```typescript
+type InputSource = 'file' | 'url';
+```
+
+**Usage**: Determines whether the input is a file upload or URL fetch.
+
+---
+
+### 4. ExtractedPolicyData
+
+Represents the intermediate data extracted from policy document by 1st LLM call.
+
+```typescript
+interface ExtractedPolicyData {
+  /** Extracted and cleaned policy content */
+  content: string;
+
+  /** 2-3 sentence summary of the policy */
+  summary: string;
+
+  /** List of validation rules extracted from policy */
+  validationRules: string[];
+
+  /** Extraction timestamp (ISO 8601) */
+  extractedAt: string;
+
+  /** Source document filename or URL */
+  sourceDocument: string;
+
+  /** Token usage for the extraction */
+  tokenUsage: TokenUsage;
+}
+```
+
+**Storage**: Client-side state only (not persisted)
+
+**Validation Rules**:
+- `content` must be non-empty string
+- `summary` should be 2-3 sentences
+- `validationRules` array may be empty but should exist
+
+---
+
+### 5. WorkflowAction
+
+Represents a single action in the generated workflow.
+
+```typescript
+interface WorkflowAction {
+  /** Hierarchical ID (e.g., "0.1", "1.1", "2.1") */
+  id: string;
+
+  /** Snake_case action identifier */
+  action_name: string;
+
+  /** Category for grouping actions */
+  category: string;
+
+  /** Description of the action (Korean preferred) */
+  description: string;
+
+  /** Whether external engine is required */
+  engine_required: boolean;
+
+  /** Engine type if required (null if not required) */
+  engine_type: string | null;
+
+  /** Policy reference notes */
+  reference_notes: string[];
+}
+```
+
+**ID Convention**:
+- 0.x: Foundational Checks
+- 1.x: Application Intake
+- 2.x: Document Verification
+- 3.x: Identity Verification
+- 4.x: Compliance Screening
+- 5.x: Risk Assessment
+- 6.x: Final Review
+
+**Engine Types**: `"OCR"`, `"LLM"`, `"WEB_SEARCH"`, `"DB_QUERY"`, `"API_CALL"`, etc.
+
+---
+
+### 6. GeneratedWorkflow
 
 Represents the output workflow.md content.
 
 ```typescript
 interface GeneratedWorkflow {
-  /** Generated workflow content in markdown format */
-  content: string;
+  /** Array of workflow actions */
+  actions: WorkflowAction[];
+
+  /** Full raw LLM response content */
+  rawContent: string;
+
+  /** Extracted workflow.md markdown section */
+  workflowMd: string;
 
   /** Generation timestamp (ISO 8601) */
   generatedAt: string;
 
-  /** Source document filename */
+  /** Source document filename or URL */
   sourceDocument: string;
 
   /** Token usage for the generation */
@@ -105,36 +201,42 @@ interface TokenUsage {
 **Storage**: Client-side state only (not persisted)
 
 **Validation Rules**:
-- `content` must be non-empty string
-- `content` should contain expected XML sections (core_identity, enterprise_context, etc.)
+- `actions` array must contain valid WorkflowAction objects
+- `rawContent` must be non-empty string
+- `workflowMd` should contain expected XML sections (core_identity, enterprise_context, etc.)
 
 ---
 
-### 4. GenerationRequest
+### 7. GenerationRequest
 
 Request payload for workflow generation.
 
 ```typescript
 interface GenerationRequest {
-  /** System prompt content */
-  systemPrompt: string;
+  /** System prompt content (optional, uses default if not provided) */
+  systemPrompt?: string;
 
-  /** Meta prompt content */
-  metaPrompt: string;
+  /** Meta prompt content (optional, uses default if not provided) */
+  metaPrompt?: string;
 
-  /** Uploaded policy document file */
-  policyDocument: File;
+  /** Uploaded policy document file (mutually exclusive with documentUrl) */
+  policyDocument?: File;
+
+  /** URL to fetch policy content (mutually exclusive with policyDocument) */
+  documentUrl?: string;
 }
 ```
 
 **Validation Rules**:
-- `systemPrompt` must be non-empty
-- `metaPrompt` must be non-empty
+- Either `policyDocument` or `documentUrl` must be provided (not both, not neither)
+- `systemPrompt` if provided, must be non-empty
+- `metaPrompt` if provided, must be non-empty
 - `policyDocument` must pass PolicyDocument validation
+- `documentUrl` must be valid HTTP/HTTPS URL
 
 ---
 
-### 5. GenerationResponse
+### 8. GenerationResponse
 
 Response payload from workflow generation.
 
@@ -145,6 +247,9 @@ interface GenerationResponse {
 
   /** Generated workflow (if successful) */
   workflow?: GeneratedWorkflow;
+
+  /** Extracted policy data (if successful) */
+  extractedData?: ExtractedPolicyData;
 
   /** Error information (if failed) */
   error?: GenerationError;
@@ -159,13 +264,17 @@ interface GenerationError {
 }
 
 type ErrorCode =
-  | 'INVALID_FILE_TYPE'
-  | 'FILE_TOO_LARGE'
-  | 'PARSE_ERROR'
-  | 'LLM_ERROR'
-  | 'RATE_LIMITED'
-  | 'TIMEOUT'
-  | 'INTERNAL_ERROR';
+  | 'NO_INPUT'           // Neither file nor URL provided
+  | 'INVALID_FILE_TYPE'  // Unsupported file extension/MIME type
+  | 'FILE_TOO_LARGE'     // File exceeds 10MB limit
+  | 'INVALID_URL'        // Malformed URL or non-HTTP(S) protocol
+  | 'URL_FETCH_FAILED'   // Failed to fetch URL content
+  | 'URL_TIMEOUT'        // URL fetch timed out
+  | 'PARSE_ERROR'        // Document parsing failed
+  | 'LLM_ERROR'          // LLM API call failed
+  | 'RATE_LIMITED'       // API rate limit exceeded
+  | 'TIMEOUT'            // Request timeout (300s)
+  | 'INTERNAL_ERROR';    // Unexpected server error
 ```
 
 ---
@@ -193,18 +302,18 @@ CLEAN -> DIRTY -> SAVING -> CLEAN
 ### Workflow Generation State
 
 ```
-IDLE -> UPLOADING -> PARSING -> GENERATING -> COMPLETE
-           |            |            |
-           v            v            v
-         ERROR        ERROR        ERROR
+IDLE -> UPLOADING -> EXTRACTING -> GENERATING -> COMPLETE
+           |            |              |
+           v            v              v
+         ERROR        ERROR          ERROR
 ```
 
 | State | Description | Triggers |
 |-------|-------------|----------|
 | IDLE | Ready for upload | Initial, reset |
-| UPLOADING | File being uploaded | File selected |
-| PARSING | Extracting text from document | Upload complete |
-| GENERATING | LLM processing | Parse complete |
+| UPLOADING | File being uploaded or URL being fetched | File selected or URL submitted |
+| EXTRACTING | 1st LLM call: Extracting policy data | Upload/fetch complete |
+| GENERATING | 2nd LLM call: Generating workflow | Extraction complete |
 | COMPLETE | Workflow generated | LLM response received |
 | ERROR | Operation failed | Any stage failure |
 
@@ -232,22 +341,49 @@ export const supportedMimeTypeSchema = z.enum([
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]);
 
+export const inputSourceSchema = z.enum(['file', 'url']);
+
 export const tokenUsageSchema = z.object({
   inputTokens: z.number().int().nonnegative(),
   outputTokens: z.number().int().nonnegative(),
   totalTokens: z.number().int().nonnegative(),
 });
 
-export const generatedWorkflowSchema = z.object({
+export const workflowActionSchema = z.object({
+  id: z.string(),
+  action_name: z.string(),
+  category: z.string(),
+  description: z.string(),
+  engine_required: z.boolean(),
+  engine_type: z.string().nullable(),
+  reference_notes: z.array(z.string()),
+});
+
+export const extractedPolicyDataSchema = z.object({
   content: z.string().min(1),
+  summary: z.string(),
+  validationRules: z.array(z.string()),
+  extractedAt: z.string().datetime(),
+  sourceDocument: z.string(),
+  tokenUsage: tokenUsageSchema,
+});
+
+export const generatedWorkflowSchema = z.object({
+  actions: z.array(workflowActionSchema),
+  rawContent: z.string().min(1),
+  workflowMd: z.string(),
   generatedAt: z.string().datetime(),
   sourceDocument: z.string(),
   tokenUsage: tokenUsageSchema,
 });
 
 export const errorCodeSchema = z.enum([
+  'NO_INPUT',
   'INVALID_FILE_TYPE',
   'FILE_TOO_LARGE',
+  'INVALID_URL',
+  'URL_FETCH_FAILED',
+  'URL_TIMEOUT',
   'PARSE_ERROR',
   'LLM_ERROR',
   'RATE_LIMITED',
@@ -263,12 +399,27 @@ export const generationErrorSchema = z.object({
 export const generationResponseSchema = z.object({
   success: z.boolean(),
   workflow: generatedWorkflowSchema.optional(),
+  extractedData: extractedPolicyDataSchema.optional(),
   error: generationErrorSchema.optional(),
 });
 
 // File validation constants
-export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-export const ALLOWED_EXTENSIONS = ['.txt', '.md', '.pdf', '.docx'] as const;
+export const FILE_CONSTRAINTS = {
+  MAX_SIZE: 10 * 1024 * 1024, // 10MB
+  ALLOWED_EXTENSIONS: ['.txt', '.md', '.pdf', '.docx'] as const,
+  ALLOWED_MIME_TYPES: [
+    'text/plain',
+    'text/markdown',
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ] as const,
+};
+
+// URL validation constants
+export const URL_CONSTRAINTS = {
+  MAX_LENGTH: 2048,
+  TIMEOUT_MS: 60000, // 60 seconds
+};
 ```
 
 ---
@@ -276,23 +427,70 @@ export const ALLOWED_EXTENSIONS = ['.txt', '.md', '.pdf', '.docx'] as const;
 ## Entity Relationships
 
 ```
-┌─────────────────┐     ┌──────────────────┐
-│  PromptContent  │     │  PolicyDocument  │
-│  (system)       │     │  (temporary)     │
-└────────┬────────┘     └────────┬─────────┘
-         │                       │
-         │    ┌──────────────────┤
-         │    │                  │
-         v    v                  v
-    ┌─────────────────────────────────┐
-    │      GenerationRequest          │
-    │  (combines prompts + document)  │
-    └─────────────────┬───────────────┘
-                      │
-                      │ Claude API
-                      v
-    ┌─────────────────────────────────┐
-    │      GeneratedWorkflow          │
-    │  (output for display/copy)      │
-    └─────────────────────────────────┘
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  PromptContent  │     │  PolicyDocument  │     │   PolicyUrl     │
+│  (system)       │     │  (temporary)     │     │  (temporary)    │
+└────────┬────────┘     └────────┬─────────┘     └────────┬────────┘
+         │                       │                        │
+         │                       └──────────┬─────────────┘
+         │                                  │
+         │         ┌────────────────────────┤
+         │         │                        │
+         v         v                        v
+    ┌─────────────────────────────────────────────────┐
+    │           GenerationRequest                     │
+    │  (combines prompts + document/url)              │
+    └─────────────────────┬───────────────────────────┘
+                          │
+                          │ 1st LLM Call (Policy Extractor)
+                          v
+    ┌─────────────────────────────────────────────────┐
+    │           ExtractedPolicyData                   │
+    │  (summary, validationRules, content)            │
+    └─────────────────────┬───────────────────────────┘
+                          │
+                          │ 2nd LLM Call (Workflow Generator)
+                          v
+    ┌─────────────────────────────────────────────────┐
+    │           GeneratedWorkflow                     │
+    │  (actions[], rawContent, workflowMd)            │
+    └─────────────────────────────────────────────────┘
+```
+
+---
+
+## API Flow Diagram
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    POST /api/generate                            │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. Input Validation                                             │
+│     ├─ Check: policyDocument XOR documentUrl                     │
+│     ├─ File: validateFile(size, extension, mimeType)             │
+│     └─ URL: validateUrl(format, protocol)                        │
+│                                                                  │
+│  2. Content Extraction                                           │
+│     ├─ File: parseDocument(PDF/DOCX/TXT/MD)                      │
+│     └─ URL: fetchUrlContent() → Claude extraction                │
+│                                                                  │
+│  3. Load Prompts                                                 │
+│     ├─ systemPrompt from request OR ./prompt/policy-prompt/      │
+│     └─ metaPrompt from request OR ./prompt/policy-prompt/        │
+│                                                                  │
+│  4. 1st LLM Call: Policy Extraction                              │
+│     ├─ Input: policyDocument text                                │
+│     ├─ Output: { summary, validationRules, structuredContent }   │
+│     └─ TokenUsage logged                                         │
+│                                                                  │
+│  5. 2nd LLM Call: Workflow Generation                            │
+│     ├─ Input: extractedData injected into metaPrompt             │
+│     ├─ Output: workflow.md with action_workflow JSON             │
+│     └─ TokenUsage logged                                         │
+│                                                                  │
+│  6. Response                                                     │
+│     └─ { success, workflow, extractedData }                      │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
 ```

@@ -2,14 +2,15 @@
 
 **Feature Branch**: `001-workflow-generator-web`
 **Created**: 2025-11-27
-**Status**: Draft
+**Updated**: 2025-12-17
+**Status**: Complete
 **Input**: User description: "Web service to generate workflow.md using system-prompt.md and meta-prompt.md with policy document upload capability"
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Generate Workflow from Policy Document (Priority: P1)
 
-A compliance officer uploads a policy document (.doc, .txt, .md, or .pdf) to generate a structured workflow.md file. The system uses the configured system-prompt and meta-prompt templates combined with Claude Opus 4.5 to analyze the policy and produce a verification workflow.
+A compliance officer uploads a policy document (.docx, .txt, .md, or .pdf) to generate a structured workflow.md file. The system uses the configured system-prompt and meta-prompt templates combined with Claude Opus 4.5 to analyze the policy and produce a verification workflow.
 
 **Why this priority**: This is the core value proposition - transforming policy documents into executable AI workflows. Without this, the application has no purpose.
 
@@ -19,13 +20,31 @@ A compliance officer uploads a policy document (.doc, .txt, .md, or .pdf) to gen
 
 1. **Given** a user has the web application open with default prompts loaded, **When** they upload a valid .pdf policy document and trigger generation, **Then** the system displays the generated workflow.md content in the right panel within a reasonable time.
 
-2. **Given** a user uploads a .doc file, **When** generation completes, **Then** the workflow.md contains structured XML sections matching the meta-prompt template (core_identity, enterprise_context, operational_workflow, decision_engine).
+2. **Given** a user uploads a .docx file, **When** generation completes, **Then** the workflow.md contains structured XML sections matching the meta-prompt template (core_identity, enterprise_context, action_workflow, decision_engine).
 
-3. **Given** a user uploads an unsupported file type (.xlsx), **When** they attempt upload, **Then** the system displays a clear error message indicating only .doc, .txt, .md, and .pdf files are accepted.
+3. **Given** a user uploads an unsupported file type (.xlsx), **When** they attempt upload, **Then** the system displays a clear error message indicating only .docx, .txt, .md, and .pdf files are accepted.
 
 ---
 
-### User Story 2 - Edit and Save System Prompt (Priority: P2)
+### User Story 2 - Generate Workflow from URL (Priority: P1)
+
+A compliance officer inputs a URL to a policy webpage. The system fetches the content, extracts policy text using Claude, and generates a structured workflow.md file.
+
+**Why this priority**: URL input extends the platform's utility by allowing users to analyze online policy documents without manual copy-paste.
+
+**Independent Test**: Can be fully tested by inputting a valid URL containing policy content and verifying that a valid workflow.md output is generated.
+
+**Acceptance Scenarios**:
+
+1. **Given** a user has the web application open with the URL input tab selected, **When** they enter a valid HTTP/HTTPS URL and trigger generation, **Then** the system fetches the content and generates a workflow.md.
+
+2. **Given** a user enters an invalid URL format, **When** they attempt generation, **Then** the system displays a clear error message about invalid URL.
+
+3. **Given** a user enters a URL that times out or fails to load, **When** the fetch fails, **Then** the system displays an appropriate error message (URL_FETCH_FAILED or URL_TIMEOUT).
+
+---
+
+### User Story 3 - Edit and Save System Prompt (Priority: P2)
 
 A user views the current system-prompt.md content in the upper-left panel and makes modifications to customize the agent's core identity, operating rules, or script registry. They save their changes for use in subsequent workflow generations.
 
@@ -43,7 +62,7 @@ A user views the current system-prompt.md content in the upper-left panel and ma
 
 ---
 
-### User Story 3 - Edit and Save Meta Prompt (Priority: P2)
+### User Story 4 - Edit and Save Meta Prompt (Priority: P2)
 
 A user views the current meta-prompt.md content in the lower-left panel and modifies the workflow template structure, execution instructions, or output format. They save their changes for use in subsequent generations.
 
@@ -59,7 +78,7 @@ A user views the current meta-prompt.md content in the lower-left panel and modi
 
 ---
 
-### User Story 4 - Copy Generated Workflow (Priority: P3)
+### User Story 5 - Copy Generated Workflow (Priority: P3)
 
 A user views the generated workflow.md in the right panel (read-only) and copies the content to their clipboard for use in other applications or documentation.
 
@@ -85,6 +104,8 @@ A user views the generated workflow.md in the right panel (read-only) and copies
 - How does system handle policy documents in languages other than English?
 - What happens when both prompt editors have unsaved changes simultaneously?
 - What happens if the user's session expires during a long generation process?
+- What happens when a URL redirects multiple times?
+- What happens when URL content is dynamically loaded via JavaScript?
 
 ## Requirements *(mandatory)*
 
@@ -92,7 +113,7 @@ A user views the generated workflow.md in the right panel (read-only) and copies
 
 - **FR-001**: System MUST display a three-panel layout with system-prompt editor (upper-left), meta-prompt editor (lower-left), and workflow output (right side full height).
 
-- **FR-002**: System MUST accept file uploads limited to .doc, .txt, .md, and .pdf formats only.
+- **FR-002**: System MUST accept file uploads limited to .docx, .txt, .md, and .pdf formats only.
 
 - **FR-003**: System MUST reject files with extensions other than the allowed types and display a user-friendly error message.
 
@@ -110,7 +131,7 @@ A user views the generated workflow.md in the right panel (read-only) and copies
 
 - **FR-010**: System MUST provide save functionality for both prompt editors that persists changes.
 
-- **FR-011**: System MUST load the default prompt contents from ./prompt/system-prompt.md and ./prompt/meta-prompt.md on initial application load.
+- **FR-011**: System MUST load the default prompt contents from ./prompt/policy-prompt/system-prompt.md and ./prompt/policy-prompt/meta-prompt.md on initial application load.
 
 - **FR-012**: System MUST display a loading indicator during workflow generation.
 
@@ -118,15 +139,27 @@ A user views the generated workflow.md in the right panel (read-only) and copies
 
 - **FR-014**: System MUST warn users about unsaved changes before they are lost (navigation/close).
 
+- **FR-015**: System MUST accept URL input as an alternative to file upload.
+
+- **FR-016**: System MUST validate URL format (HTTP/HTTPS only) before attempting to fetch content.
+
+- **FR-017**: System MUST extract policy content from web pages using Claude LLM.
+
+- **FR-018**: System MUST handle URL fetch failures with appropriate error codes (URL_FETCH_FAILED, URL_TIMEOUT, INVALID_URL).
+
 ### Key Entities
 
-- **SystemPrompt**: The agent configuration defining core identity, operating rules, script registry, and execution protocol. Stored as markdown content. Can be modified and saved.
+- **SystemPrompt**: The agent configuration defining core identity, operating rules, script registry, and execution protocol. Stored as markdown content at `./prompt/policy-prompt/system-prompt.md`. Can be modified and saved.
 
-- **MetaPrompt**: The workflow generation template containing role definition, execution instructions, and output template skeleton. Stored as markdown content. Can be modified and saved.
+- **MetaPrompt**: The workflow generation template containing role definition, execution instructions, and output template skeleton. Stored as markdown content at `./prompt/policy-prompt/meta-prompt.md`. Can be modified and saved.
 
-- **PolicyDocument**: User-uploaded document containing compliance/verification rules to be analyzed. Supported formats: .doc, .txt, .md, .pdf. Temporary - not persisted after generation.
+- **PolicyDocument**: User-uploaded document containing compliance/verification rules to be analyzed. Supported formats: .docx, .txt, .md, .pdf. Temporary - not persisted after generation.
 
-- **GeneratedWorkflow**: The output workflow.md content produced by combining prompts with policy analysis through Claude Opus 4.5. Read-only display with copy capability.
+- **PolicyUrl**: User-provided URL pointing to a policy webpage. System fetches and extracts content. Temporary - not persisted after generation.
+
+- **GeneratedWorkflow**: The output workflow.md content produced by combining prompts with policy analysis through Claude Opus 4.5. Contains actions array, rawContent, workflowMd, and token usage. Read-only display with copy capability.
+
+- **ExtractedPolicyData**: Intermediate data extracted from policy document by 1st LLM call. Contains summary, validationRules, and structuredContent. Displayed to user for transparency.
 
 ## Success Criteria *(mandatory)*
 
@@ -146,6 +179,10 @@ A user views the generated workflow.md in the right panel (read-only) and copies
 
 - **SC-007**: Users can identify and understand errors within 5 seconds through clear error messaging.
 
+- **SC-008**: URL-based generation completes within 90 seconds for standard web pages.
+
+- **SC-009**: 90% of valid URLs with accessible content result in successful workflow generation.
+
 ## Assumptions
 
 - Users have a stable internet connection for LLM API calls.
@@ -154,3 +191,5 @@ A user views the generated workflow.md in the right panel (read-only) and copies
 - Single-user usage per session (no concurrent editing conflicts to handle).
 - Prompt files are stored server-side and accessible to the application.
 - Maximum file size of 10MB for uploaded documents (standard web upload limit).
+- URL content is publicly accessible (no authentication support for URL fetch).
+- URLs return HTML content (JavaScript-rendered content may not be fully extracted).
