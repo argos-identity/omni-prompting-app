@@ -33,8 +33,8 @@ ANTHROPIC_API_KEY=sk-ant-your-api-key-here
 ### 3. Verify Prompt Files
 
 Ensure prompt files exist at:
-- `./prompt/system-prompt.md`
-- `./prompt/meta-prompt.md`
+- `./prompt/policy-prompt/system-prompt.md`
+- `./prompt/policy-prompt/meta-prompt.md`
 
 ### 4. Start Development Server
 
@@ -102,8 +102,9 @@ Application runs at `http://localhost:3500`
 │   └── utils/                  # Utilities
 ├── types/                      # TypeScript definitions
 └── prompt/                     # Prompt markdown files
-    ├── system-prompt.md
-    └── meta-prompt.md
+    └── policy-prompt/
+        ├── system-prompt.md
+        └── meta-prompt.md
 ```
 
 ## Common Issues

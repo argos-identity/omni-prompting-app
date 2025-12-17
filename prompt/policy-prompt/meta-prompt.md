@@ -205,8 +205,7 @@ Language Convention:
 	      "required": true
 	    }
 	  ]
-	}
-  },
+	},
 	{
 	  "work_id": 2,
 	  "action_name": "cross_validate_business_data",
@@ -278,7 +277,7 @@ Language Convention:
     - **REJECT_HARD**: Policy violation confirmed, final rejection
       - 정책 위반 확정, 최종 거부 (재신청 불가 또는 제한)
     </outcome_definitions>
-<!--
+  <!--
     <risk_scoring>
     [Calculate weighted risk score to determine outcome]
     - **Critical Flags (×3)**: Identity mismatch, sanctions list match, fraud indicators
@@ -302,9 +301,8 @@ Language Convention:
     - Sanctions Match → Immediate ESCALATE_TO_SENIOR + Compliance Alert
     - Multiple Major Flags (≥3) → MANUAL_REVIEW minimum
     - Conflicting Data Sources → MANUAL_REVIEW for reconciliation
-    </escalation_rules>
-
- -->    
+    </escalation_rules> 
+  -->
     
 </decision_engine>
 ```
