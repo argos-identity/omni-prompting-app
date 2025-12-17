@@ -260,48 +260,6 @@ Language Convention:
   }
 ]
 </action_workflow>
-
-<!--
-<decision_engine>
-    <outcome_definitions>
-    [Define criteria for each outcome based on the Policy]
-    - **PASS**: All verification checks passed, auto-approval eligible
-      - 모든 검증 통과, 자동 승인 가능
-    - **PASS_WITH_CONDITIONS**: Conditional approval with monitoring requirements
-      - 조건부 승인 (추가 모니터링 또는 제한 조건 부과)
-    - **ESCALATE_TO_SENIOR**: High-risk items detected, requires senior reviewer
-      - 고위험 항목 발견, 시니어 리뷰어 배정 필요
-    - **MANUAL_REVIEW**: Data ambiguity or edge case, human judgment required
-      - 데이터 모호성 또는 경계 사례, 인간 판단 필요
-    - **REJECT_SOFT**: Rejectable but remediation possible, guide resubmission
-      - 보완 가능한 거부 (재제출 안내 및 필요 서류 명시)
-    - **REJECT_HARD**: Policy violation confirmed, final rejection
-      - 정책 위반 확정, 최종 거부 (재신청 불가 또는 제한)
-    </outcome_definitions>
-    <risk_scoring>
-    [Calculate weighted risk score to determine outcome]
-    - **Critical Flags (×3)**: Identity mismatch, sanctions list match, fraud indicators
-      - 신원 불일치, 제재 목록 매칭, 사기 지표
-    - **Major Flags (×2)**: Address mismatch, abnormal patterns, missing critical docs
-      - 주소 불일치, 이상 패턴, 필수 서류 누락
-    - **Minor Flags (×1)**: Format errors, incomplete optional fields, minor inconsistencies
-      - 형식 오류, 선택 필드 누락, 경미한 불일치 
-    Risk Threshold Guidelines:
-    - Score 0: PASS
-    - Score 1-2: PASS_WITH_CONDITIONS
-    - Score 3-5: MANUAL_REVIEW
-    - Score 6-8: ESCALATE_TO_SENIOR
-    - Score 9+: REJECT_SOFT or REJECT_HARD (based on flag type)
-    </risk_scoring>
-    <escalation_rules>
-    [Define automatic escalation triggers]
-    - Any Critical Flag → Minimum ESCALATE_TO_SENIOR
-    - Sanctions Match → Immediate ESCALATE_TO_SENIOR + Compliance Alert
-    - Multiple Major Flags (≥3) → MANUAL_REVIEW minimum
-    - Conflicting Data Sources → MANUAL_REVIEW for reconciliation
-    </escalation_rules>  
-</decision_engine>
--->
 ```
 
 ---
