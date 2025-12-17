@@ -261,6 +261,7 @@ Language Convention:
 ]
 </action_workflow>
 
+<!--
 <decision_engine>
     <outcome_definitions>
     [Define criteria for each outcome based on the Policy]
@@ -277,7 +278,6 @@ Language Convention:
     - **REJECT_HARD**: Policy violation confirmed, final rejection
       - 정책 위반 확정, 최종 거부 (재신청 불가 또는 제한)
     </outcome_definitions>
-  <!--
     <risk_scoring>
     [Calculate weighted risk score to determine outcome]
     - **Critical Flags (×3)**: Identity mismatch, sanctions list match, fraud indicators
@@ -286,7 +286,6 @@ Language Convention:
       - 주소 불일치, 이상 패턴, 필수 서류 누락
     - **Minor Flags (×1)**: Format errors, incomplete optional fields, minor inconsistencies
       - 형식 오류, 선택 필드 누락, 경미한 불일치 
-
     Risk Threshold Guidelines:
     - Score 0: PASS
     - Score 1-2: PASS_WITH_CONDITIONS
@@ -294,17 +293,15 @@ Language Convention:
     - Score 6-8: ESCALATE_TO_SENIOR
     - Score 9+: REJECT_SOFT or REJECT_HARD (based on flag type)
     </risk_scoring>
-
     <escalation_rules>
     [Define automatic escalation triggers]
     - Any Critical Flag → Minimum ESCALATE_TO_SENIOR
     - Sanctions Match → Immediate ESCALATE_TO_SENIOR + Compliance Alert
     - Multiple Major Flags (≥3) → MANUAL_REVIEW minimum
     - Conflicting Data Sources → MANUAL_REVIEW for reconciliation
-    </escalation_rules> 
-  -->
-    
+    </escalation_rules>  
 </decision_engine>
+-->
 ```
 
 ---
