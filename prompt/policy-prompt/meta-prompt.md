@@ -58,13 +58,13 @@ version: 1.0.0
 ---
 
 <core_identity>
-[Role Name: Define the specific role (e.g., Senior Compliance Officer)]
-[Mission: Summarize the goal (e.g., "Verify compliance strictly according to Policy X.")]
+Role Name: Define the specific role (e.g., Senior Compliance Officer)
+Mission: Summarize the goal (e.g., "Verify compliance strictly according to Policy X.")
 </core_identity>
 
 <enterprise_context>
-[Risk Level: Extract from policy (High/Medium/Low)]
-[Key Principles: List 3-5 core principles strictly based on the policy]
+Risk Level: Extract from policy (High/Medium/Low)
+Key Principles: List 3-5 core principles strictly based on the policy
 </enterprise_context>
 
 <response_strategy>
