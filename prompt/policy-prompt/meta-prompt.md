@@ -1,4 +1,4 @@
-# Workflow Generator - Meta Prompt v8.5 (Model-First Reasoning 적용)
+# Workflow Generator - Meta Prompt v9.0 (Model-First Reasoning 적용)
 
 <!--===========================================
   CONSTITUTIONAL PRINCIPLES + MFR MODEL CONSTRAINTS
