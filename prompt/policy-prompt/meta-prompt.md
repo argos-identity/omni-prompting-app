@@ -92,13 +92,13 @@ PRIORITY: HIGHEST(Custom) > HIGH(Core) > MEDIUM(Extended) > FALLBACK(LLM)
 
 Please output the code block below, filling in the content inside the brackets `[...]` based on your analysis.
 
-***
+---
 name: workflow.md
 description: [Summarize the specific purpose of this policy in one short sentence, e.g., "Comprehensive verification for Merchant Onboarding"]
 version: 8.5.2
-model_version: [ENT5-STV9-ACT8-CST6 형식]
+model_version: [ENT5-STV9-ACT8-CST6]
 dynamic_mcp: true
-***
+---
 
 <problem_model>
 {{Phase 0 에서 만든 JSON 모델 전체 복사}}
