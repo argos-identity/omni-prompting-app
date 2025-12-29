@@ -91,6 +91,9 @@ Your goal is to analyze the provided **[Policy/Guideline Document]** and generat
 	- 모든 action은 MODEL.actions의 조합/서브셋이어야 함
 	- agent_executable 판단 시 MODEL.constraints 강제 참조
 	- **Output**: MODEL-grounded action 초안 목록
+  - action_name은 MODEL.actions의 **정확한 이름 또는 조합**만 사용
+  - **"최종 판정(PASS/REJECT)"은 무조건 agent_executable=false**
+  - MODEL.constraints에 "최종승인_인간필수"가 있으면 관련 action은 false 강제
 	
 	## Iteration 3: MODEL Compliance Review
 	- 각 action 검토:
