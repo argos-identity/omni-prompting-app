@@ -55,30 +55,11 @@ export default function Home() {
           className="w-full lg:w-1/3 flex flex-col border-b lg:border-b-0 lg:border-r border-gray-200 bg-gray-50"
           aria-label="Prompt Editors"
         >
-          {/* System Prompt Panel */}
-          <div
-            className={`
-              ${expandedPrompt === 'system' ? 'flex-1' : expandedPrompt === 'meta' ? 'flex-shrink-0' : 'flex-1'}
-              ${expandedPrompt !== 'meta' ? 'border-b border-gray-200' : ''}
-              p-2 sm:p-3
-              ${expandedPrompt === null ? 'min-h-[250px] lg:min-h-0' : ''}
-              transition-all duration-200
-            `}
-          >
-            <PromptEditor
-              type="system"
-              title="System Prompt"
-              isExpanded={expandedPrompt === 'system'}
-              isCollapsed={expandedPrompt === 'meta'}
-              onExpand={() => handleExpandPrompt('system')}
-              onCollapse={handleCollapsePrompt}
-            />
-          </div>
-
           {/* Meta Prompt Panel */}
           <div
             className={`
               ${expandedPrompt === 'meta' ? 'flex-1' : expandedPrompt === 'system' ? 'flex-shrink-0' : 'flex-1'}
+              ${expandedPrompt !== 'system' ? 'border-b border-gray-200' : ''}
               p-2 sm:p-3
               ${expandedPrompt === null ? 'min-h-[250px] lg:min-h-0' : ''}
               transition-all duration-200
@@ -90,6 +71,25 @@ export default function Home() {
               isExpanded={expandedPrompt === 'meta'}
               isCollapsed={expandedPrompt === 'system'}
               onExpand={() => handleExpandPrompt('meta')}
+              onCollapse={handleCollapsePrompt}
+            />
+          </div>
+
+          {/* System Prompt Panel */}
+          <div
+            className={`
+              ${expandedPrompt === 'system' ? 'flex-1' : expandedPrompt === 'meta' ? 'flex-shrink-0' : 'flex-1'}
+              p-2 sm:p-3
+              ${expandedPrompt === null ? 'min-h-[250px] lg:min-h-0' : ''}
+              transition-all duration-200
+            `}
+          >
+            <PromptEditor
+              type="system"
+              title="System Prompt"
+              isExpanded={expandedPrompt === 'system'}
+              isCollapsed={expandedPrompt === 'meta'}
+              onExpand={() => handleExpandPrompt('system')}
               onCollapse={handleCollapsePrompt}
             />
           </div>
