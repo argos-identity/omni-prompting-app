@@ -76,14 +76,12 @@ CONSTRAINTS: 항상 지켜야 할 제약들 (최종승인_인간필수 등)
 }
 
 ## Iteration 3: MODEL + MCP Dynamic Compliance Review
-각 action 7가지 체크:
+각 action 5가지 체크:
 1. MODEL 준수? 
 2. precondition OK? 
 3. agent_executable 정확?
-4. mcp_capable_tools 2-4개? 
-5. Custom Tools HIGHEST? 
-6. Priority 올바름? 
-7. rationale 명확?
+4. Priority 올바름? 
+5. rationale 명확?
 
 ## Iteration 4: Final Output (LangChainJS + Claude Dynamic 최적화)
 - **CRITICAL**: 모든 action에 `model_reference` 필드 추가 (어떤 MODEL 요소에 기반한 것인지)
