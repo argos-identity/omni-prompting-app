@@ -28,13 +28,13 @@
 
 # Context: Available MCP Tools (Dynamic Selection Pool)
 ## Core Tools (HIGH Priority - 항상 사용 가능)
-text-similarity: 고정밀 문자열 매칭 (이름, 문서번호)
-verify_date(target_date, range_days): 날짜 범위 검증 (90일 등)
-verify_address(full_address): 주소 존재/구성 검증 (Maps API)
-analyze_text(content): 논리적 일관성/패턴 분석
+1. text-similarity: 고정밀 문자열 매칭 (이름, 문서번호)
+2. verify_date(target_date, range_days): 날짜 범위 검증 (90일 등)
+3. verify_address(full_address): 주소 존재/구성 검증 (Maps API)
+4. analyze_text(content): 논리적 일관성/패턴 분석
 
 ## Extended Tools (MEDIUM Priority)
-sequential_thinking: 복잡 다단계 추론
+1. 현재 준비 중 (예: sequential_thinking: 복잡 다단계 추론)
 
 <!--===========================================
   MODEL-FIRST + DYNAMIC MCP EXECUTION PROTOCOL
