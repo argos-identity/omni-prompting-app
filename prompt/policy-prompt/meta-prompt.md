@@ -61,14 +61,19 @@ CONSTRAINTS: 항상 지켜야 할 제약들 (최종승인_인간필수 등)
 - 각 규칙에 대해 **가능한 MCP 툴 후보** 식별 (Custom > Core > Extended)
 - Output: rule + tool_capabilities
 
-## Iteration 2: Dynamic MCP Candidates + Action Draft
-**각 action마다 mcp_capable_tools 2-4개 제공**:
-
-PRIORITY: HIGHEST(Custom) > HIGH(Core) > MEDIUM(Extended) > FALLBACK(LLM)
-
-- MODEL.actions primitives만 사용
-- agent_executable = MODEL.constraints 기반
-- Output: MODEL-grounded + dynamic MCP candidate action
+## Iteration 2: 하이브리드 MCP + Action Draft
+1. **model_reference**: MODEL.actions primitives 정확 매칭
+2. **mcp_capable_tools** (0-4개): Custom(HIGHEST) > Core(HIGH) > Extended(MEDIUM) > LLM(FALLBACK)
+3. **reference_notes** (2-3개): 정책 원문 + 실행 경계 + 감사 증거
+4. **engines** (1-2개): mcp_capable_tools 실패시 순차 실행
+5. **agent_executable**: MODEL.constraints 기반 (최종결정=false)
+6. **precondition/effect**: Phase 0 MODEL.actions에서 직접 복사
+**예시 하이브리드 Action**:
+{
+  "mcp_capable_tools": [{"type": "verify_date", "priority": "HIGH", "params": {"range_days": 90}}],
+  "reference_notes": ["90일 초과 REJECT (정책 1.4)"],
+  "engines": [{"type": "LLM", "required": true}]
+}
 
 ## Iteration 3: MODEL + MCP Dynamic Compliance Review
 각 action 7가지 체크:
@@ -125,25 +130,65 @@ Mission: "Verify compliance strictly according to Policy X, operating WITHIN <pr
 </response_strategy>
 
 <action_workflow>
+  <WorkflowActionSchema>
+    <Field name="work_id" type="integer" required="true" />
+    <Field name="action_name" type="string" required="true" />
+    <Field name="category" type="string" required="true" />
+    <Field name="description" type="string" required="true" />
+    <Field name="agent_executable" type="boolean" required="true" />
+    <Field name="model_reference" type="string" required="true" />
+    <!-- 동적 우선 -->
+    <Field name="mcp_capable_tools" type="ToolCandidate[]" required="false" />
+    <!-- 정책 증거 + 안전장치 -->
+    <Field name="reference_notes" type="string[]" required="true" />
+    <Field name="engines" type="Engine[]" required="true" />
+    <!-- MFR 상태 전이 -->
+    <Field name="precondition" type="string" required="true" />
+    <Field name="expected_effect" type="string" required="true" />
+  </WorkflowActionSchema>
+
 [
   {
     "work_id": 1,
-    "action_name": "[MODEL.actions 이름]",
-    "category": "[카테고리]",
-    "description": "[설명]",
+    "action_name": "verify_document_type",
+    "category": "Document Classification",
+    "description": "주민등록증/세금고지서/bank statement 중 허용 유형 검증",
     "agent_executable": true,
-    "model_reference": "entities:[이름] + state_variables:[이름] + actions:[이름]",
+    "model_reference": "entities:주소지_증명_문서 + state_variables:문서_유형_적합성 + actions:문서_유형_확인",
+    
+    // 👇 동적 우선 (0-4개)
     "mcp_capable_tools": [
       {
-        "type": "[툴이름]", 
-        "priority": "[HIGHEST/HIGH/MEDIUM/FALLBACK]",
-        "params": [{} 또는 {"range_days": 90}],
-        "rationale": "[툴 선택 이유]"
+        "type": "Custom_Doc_Classifier",
+        "priority": "HIGHEST",
+        "params": {},
+        "rationale": "사용자 정의 문서 분류기 우선 사용"
+      },
+      {
+        "type": "LLM",
+        "priority": "FALLBACK", 
+        "params": {},
+        "rationale": "패턴 매칭 기반 분류"
       }
     ],
-    "reference_notes": ["[정책 원문]"],
-    "precondition": "[MODEL.actions.precondition]",
-    "expected_effect": "[MODEL.actions.effect]"
+    
+    // 👇 정책 증거 (필수)
+    "reference_notes": [
+      "허용 문서: 주민등록증, 세금고지서, bank statement (정책 규칙 2)",
+      "이 3가지 외 문서는 즉시 REJECT"
+    ],
+    
+    // 👇 MFR 상태 전이 (필수)
+    "precondition": "문서_제출됨",
+    "expected_effect": "문서_유형_적합성_판정",
+    
+    // 👇 안전장치 fallback (필수)
+    "engines": [
+      {
+        "type": "LLM",
+        "required": true
+      }
+    ]
   }
   <!-- 모든 actions 동일 형식으로 -->
 ]
