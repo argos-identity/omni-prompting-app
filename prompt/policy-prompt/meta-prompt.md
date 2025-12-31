@@ -126,7 +126,7 @@ Mission: "Verify compliance strictly according to Policy X, operating WITHIN <pr
 		4. Repeat until agent_executable=false (HUMAN)
 	</primary_directive>
 </response_strategy>
-
+<!--
 <WorkflowActionSchema>
   <Field name="work_id" type="integer" required="true" />
   <Field name="action_name" type="string" required="true" />
@@ -134,15 +134,13 @@ Mission: "Verify compliance strictly according to Policy X, operating WITHIN <pr
   <Field name="description" type="string" required="true" />
   <Field name="agent_executable" type="boolean" required="true" />
   <Field name="model_reference" type="string" required="true" />
-  <!-- 동적 우선 -->
   <Field name="mcp_capable_tools" type="ToolCandidate[]" required="false" />
-  <!-- 정책 증거 + 안전장치 -->
   <Field name="reference_notes" type="string[]" required="true" />
   <Field name="engines" type="Engine[]" required="true" />
-  <!-- MFR 상태 전이 -->
   <Field name="precondition" type="string" required="true" />
   <Field name="expected_effect" type="string" required="true" />
-</WorkflowActionSchema>
+</WorkflowActionSchema> 
+-->
 
 <action_workflow>
 [
