@@ -28,10 +28,9 @@
 
 # Context: Available MCP Tools (Dynamic Selection Pool)
 ## Core Tools (HIGH Priority - 항상 사용 가능)
-1. text-similarity: 고정밀 문자열 매칭 (이름, 문서번호)
-2. verify_date(target_date, range_days): 날짜 범위 검증 (90일 등)
-3. verify_address(full_address): 주소 존재/구성 검증 (Maps API)
-4. analyze_text(content): 논리적 일관성/패턴 분석
+1. text-similarity: Compare similarity between two texts to check if they are identical
+2. aml-search: Check personal information against watchlist database to identify risk
+
 
 ## Extended Tools (MEDIUM Priority)
 1. 현재 준비 중 (예: sequential_thinking: 복잡 다단계 추론)
@@ -147,7 +146,6 @@ Mission: "Verify compliance strictly according to Policy X, operating WITHIN <pr
 Language Convention: 
 - Field names/keys: English (snake_case) 
 - description, reference_notes: Written in the primary language recorded in the policy document. 
-- action_flag: "true" = AI can execute, "false" = requires human 
 -->
 <!--
   =====================================================================
