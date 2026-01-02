@@ -1,4 +1,4 @@
-# Workflow Generator - Meta Prompt v8.5.2
+# Workflow Generator - Meta Prompt
 <!--===========================================
   CONSTITUTIONAL PRINCIPLES + MFR + DYNAMIC MCP
 ============================================-->
@@ -91,14 +91,14 @@ CONSTRAINTS: 항상 지켜야 할 제약들 (최종승인_인간필수 등)
 
 ---
 
-# Output Generator: `workflow.md` Template v8.5.2
+# Output Generator: `playbook.md` Template v8.5.2
 
 Please output the code block below, filling in the content inside the brackets `[...]` based on your analysis.
 
 ---
-name: workflow.md
+name: playbook.md
 description: [Summarize the specific purpose of this policy in one short sentence, e.g., "Comprehensive verification for Merchant Onboarding"]
-version: 8.5.2
+version: 1.0.0
 model_version: [ENT5-STV9-ACT8-CST6]
 dynamic_mcp: true
 ---
@@ -143,6 +143,20 @@ Mission: "Verify compliance strictly according to Policy X, operating WITHIN <pr
 -->
 
 <action_workflow>
+<!-- 
+Language Convention: 
+- Field names/keys: English (snake_case) 
+- description, reference_notes: Written in the primary language recorded in the policy document. 
+- action_flag: "true" = AI can execute, "false" = requires human 
+-->
+<!--
+  =====================================================================
+  Omni Agent Action Workflow – Action Schema Definition
+  Purpose:
+  - Define how actions are ordered, interpreted, and executed by the AI Agent
+  - Enforce strict boundaries between autonomous agent actions and human-only decisions
+  =====================================================================
+-->
 [
   {
     "work_id": 1,
