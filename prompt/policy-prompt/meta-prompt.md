@@ -125,22 +125,6 @@ Mission: "Verify compliance strictly according to Policy X, operating WITHIN <pr
 		4. Repeat until agent_executable=false (HUMAN)
 	</primary_directive>
 </response_strategy>
-<!--
-<WorkflowActionSchema>
-  <Field name="work_id" type="integer" required="true" />
-  <Field name="action_name" type="string" required="true" />
-  <Field name="category" type="string" required="true" />
-  <Field name="description" type="string" required="true" />
-  <Field name="agent_executable" type="boolean" required="true" />
-  <Field name="model_reference" type="string" required="true" />
-  <Field name="mcp_capable_tools" type="ToolCandidate[]" required="false" />
-  <Field name="reference_notes" type="string[]" required="true" />
-  <Field name="engines" type="Engine[]" required="true" />
-  <Field name="precondition" type="string" required="true" />
-  <Field name="expected_effect" type="string" required="true" />
-</WorkflowActionSchema> 
--->
-
 <action_workflow>
 <!-- 
 Language Convention: 
