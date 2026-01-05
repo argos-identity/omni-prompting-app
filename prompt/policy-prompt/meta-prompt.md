@@ -146,15 +146,78 @@ Mission: "Verify compliance strictly according to Policy X, operating WITHIN <pr
 Language Convention: 
 - Field names/keys: English (snake_case) 
 - description, reference_notes: Written in the primary language recorded in the policy document. 
--->
-<!--
-  =====================================================================
+<WorkflowActionSchema>
+  work_id
+    - Integer execution order
+    - Defines the ONLY valid action sequence
+    - Must be unique within a workflow
+    - Execution order is ascending (1 → N)
+    - Do NOT encode order in action_name
+  <Field name="work_id" type="integer" required="true" />
+  action_name
+    - Stable, machine-readable identifier
+    - snake_case only
+    - Must remain stable across workflow versions
+    - Used for orchestration, logging, and policy enforcement
+  <Field name="action_name" type="string" required="true" />
+  category
+    - Logical grouping label
+    - Used for observability, audit logs, and UI grouping
+    - Does NOT affect execution order
+  <Field name="category" type="string" required="true" />
+  description
+    - Operational description of the action
+    - Describes WHAT is done, not WHO decides
+    - Must avoid language implying final approval or legal judgment
+  <Field name="description" type="string" required="true" />
+  agent_executable
+    - Physical executability by the AI Agent (a digital analyst), not permission/authority.
+    - true  : Can be completed purely through digital operations (compute, transform, analyze, query, produce outputs).
+    - false : Requires real-world/physical execution or direct human action outside the agent’s digital tools.
+             Examples: mailing physical documents, making phone calls, in-person verification, handing over a card/device,
+             posting notices in a physical location, wet-ink signatures, collecting cash, visiting a site.
+    - If false: the agent must output an execution request (handoff) specifying what a human/system must do.
+  <Field name="agent_executable" type="boolean" required="true" />
+  reference_notes
+    - Policy-derived notes that MUST be consulted when executing the action
+    - Source of truth: policy document (do not invent or modify semantics)
+    - Intended use:
+      (a) Grounding: ensure the agent follows policy intent and constraints
+			(b) Boundary Anchoring:
+	      Explicitly state policy-defined limits on interpretation and judgment,
+	      preventing the agent from extending execution beyond permitted scope
+      (c) Evidence: provide auditable rationale for why the action exists
+    - Constraints:
+      - Notes are guidance, not new requirements beyond the policy document
+      - The agent must not treat notes as user-provided facts; they are internal policy references
+      - The agent should not output the full policy text verbatim unless explicitly required by system design
+    - Format:
+      - An ordered list of note items (string)
+      - Each item should be a concise statement directly traceable to policy language
+  <Field name="reference_notes" type="string[]" required="false" />
+  engines
+    - List of engines available for this action
+    - Empty array means no engine usage
+    - Each engine declares whether it is required
+  <Field name="engines" type="Engine[]" required="true" />
+  Engine
+    - type: engine identifier (controlled vocabulary)
+    - required:
+        true  → engine must succeed
+        false → optional / conditional / fallback
+  <Engine>
+    <Field name="type" type="string" required="true" />
+    <Field name="required" type="boolean" required="true" />
+  </Engine>
+</WorkflowActionSchema>
+=====================================================================
   Omni Agent Action Workflow – Action Schema Definition
   Purpose:
   - Define how actions are ordered, interpreted, and executed by the AI Agent
   - Enforce strict boundaries between autonomous agent actions and human-only decisions
-  =====================================================================
+=====================================================================
 -->
+
 [
   {
     "work_id": 1,
